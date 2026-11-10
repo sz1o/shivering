@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>shivering.</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          },
+          colors: {
+            frostSky: '#99ccff',
+            frostIce: '#cce6ff',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* iOS Glass & Ambient Aura Styling */
+    :root {
+      --ios-blur: blur(28px);
+      --ios-border: rgba(255, 255, 255, 0.7);
+      --ios-card-bg: rgba(255, 255, 255, 0.45);
+    }
+
+    * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 25%, #ffffff 0%, #d6ecfb 45%, #a9d6f8 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: #000000;
+    }
+
+    /* Diffuse Frosted Glow (Not neon text) */
+    .shivering-glow {
+      position: relative;
+      color: #000000;
+      text-shadow: 
+        0 0 35px rgba(255, 255, 255, 0.95),
+        0 0 65px rgba(186, 230, 253, 0.85),
+        0 0 100px rgba(147, 197, 253, 0.6);
+    }
+
+    .shivering-glow::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 130%;
+      height: 140%;
+      background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.85) 0%, rgba(199, 233, 255, 0.5) 45%, transparent 70%);
+      filter: blur(40px);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* iOS Glass Morphism */
+    .ios-glass {
+      background: var(--ios-card-bg);
+      backdrop-filter: var(--ios-blur);
+      -webkit-backdrop-filter: var(--ios-blur);
+      border: 1px solid var(--ios-border);
+      box-shadow: 
+        0 20px 45px -15px rgba(15, 35, 60, 0.12),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -1px 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    .ios-glass-pill {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 248, 255, 0.65) 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 
+        0 14px 30px rgba(28, 62, 94, 0.12),
+        0 3px 6px rgba(0, 0, 0, 0.04),
+        inset 0 1px 2px rgba(255, 255, 255, 1);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .ios-glass-pill:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 
+        0 20px 38px rgba(28, 62, 94, 0.18),
+        0 6px 12px rgba(0, 0, 0, 0.06),
+        inset 0 1px 3px rgba(255, 255, 255, 1);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 251, 255, 0.8) 100%);
+    }
+
+    .ios-glass-pill:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .game-card {
+      transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .game-card:hover {
+      transform: translateY(-5px) scale(1.02);
+      border-color: rgba(255, 255, 255, 0.95);
+      box-shadow: 
+        0 20px 40px -10px rgba(18, 54, 94, 0.16),
+        inset 0 1px 2px rgba(255, 255, 255, 1);
+    }
+
+    .view-transition {
+      transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="relative min-h-screen text-black flex flex-col justify-between overflow-x-hidden font-sans">
+
+  <!-- Interactive Snow Canvas Layer -->
+  <canvas id="snow-canvas" class="fixed inset-0 pointer-events-none z-0 w-full h-full"></canvas>
+
+  <!-- Sky Gradient Lighting -->
+  <div class="fixed inset-0 pointer-events-none z-[1] bg-gradient-to-b from-white/30 via-transparent to-sky-200/30"></div>
+
+  <!-- Main View Container -->
+  <div class="relative z-10 flex-1 flex flex-col w-full min-h-screen">
+
+    <!-- Minimal Header (Back button removed) -->
+    <header class="w-full px-6 py-4 flex items-center justify-between max-w-6xl mx-auto">
+      <div></div>
+      <div></div>
+    </header>
+
+    <!-- SECTION 1: HERO LANDING -->
+    <section id="hero-view" class="view-transition flex-1 flex flex-col items-center justify-center text-center px-4 -mt-10">
+      <div class="max-w-3xl mx-auto flex flex-col items-center">
+        <!-- Title: bold big black text with diffuse glowing aura -->
+        <h1 class="shivering-glow text-7xl sm:text-8xl md:text-9xl font-black tracking-tight leading-none mb-14 text-black select-none">
+          shivering.
+        </h1>
+
+        <!-- Main Action Pill Button -->
+        <button id="play-trigger-btn" class="ios-glass-pill px-10 py-5 rounded-full flex items-center gap-3 cursor-pointer group active:scale-95 transition-all duration-300">
+          <span class="text-xl sm:text-2xl font-black text-black tracking-tight">Play below....</span>
+          <svg class="w-6 h-6 text-black transform group-hover:translate-y-1 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3"></path>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- SECTION 2: CLEAN GAME & HTML FILE SLOTS -->
+    <section id="games-view" class="view-transition hidden opacity-0 translate-y-10 flex-1 flex flex-col items-center px-4 sm:px-6 py-6 max-w-6xl mx-auto w-full">
+      
+      <!-- Top Action Bar -->
+      <div class="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+        <div>
+          <h2 class="text-3xl sm:text-4xl font-black text-black tracking-tight">
+            Games
+          </h2>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <!-- Hidden file input for uploading .html files -->
+          <input type="file" id="html-file-input" accept=".html,.htm" class="hidden" multiple>
+          <button onclick="document.getElementById('html-file-input').click()" class="ios-glass-pill px-5 py-2.5 rounded-full text-xs font-black text-black flex items-center gap-2 cursor-pointer shadow-sm">
+            <span>+ Load HTML File</span>
+          </button>
+          <button onclick="openCustomCodeEditor()" class="ios-glass px-5 py-2.5 rounded-full text-xs font-black text-black hover:bg-white/70 transition shadow-sm">
+            <span>+ Paste Code</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- App Card Grid for Loaded Games / HTML Files -->
+      <div id="games-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full pb-16">
+        <!-- Dynamically rendered slots appear here -->
+      </div>
+    </section>
+  </div>
+
+  <!-- SECTION 3: iOS GLOSSY MODAL WINDOW (Game & HTML Viewer) -->
+  <div id="game-modal-backdrop" class="fixed inset-0 z-50 bg-black/30 backdrop-blur-xl opacity-0 pointer-events-none transition-all duration-300 flex items-center justify-center p-3 sm:p-6">
+    
+    <div id="game-modal-window" class="relative w-full max-w-5xl h-[88vh] bg-white/75 backdrop-blur-2xl border border-white/80 rounded-[32px] shadow-2xl flex flex-col overflow-hidden transform scale-95 transition-all duration-300">
+      
+      <!-- Top iOS Window Bar -->
+      <div class="px-6 py-3.5 border-b border-white/60 bg-white/40 flex items-center justify-between shrink-0">
+        <span id="modal-game-title" class="text-sm font-black text-black tracking-tight">Game Window</span>
+
+        <!-- Right action: Close 'X' Letter -->
+        <button id="modal-close-btn" class="w-8 h-8 rounded-full bg-black/10 hover:bg-black/20 active:scale-90 flex items-center justify-center font-black text-black text-base transition-all duration-200 cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <!-- Main Game / Code Viewer Container -->
+      <div id="game-embed-container" class="relative flex-1 bg-black overflow-hidden w-full h-full">
+        <iframe id="game-iframe" class="w-full h-full border-0 block" allow="fullscreen; pointer-lock; autoplay" sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-downloads allow-modals"></iframe>
+      </div>
+
+      <!-- Bottom Control Bar with Fullscreen Button Underneath Shown HTML -->
+      <div class="px-6 py-3.5 border-t border-white/60 bg-white/40 flex items-center justify-end shrink-0">
+        <button id="modal-fullscreen-btn" class="ios-glass-pill px-6 py-2.5 rounded-full text-xs font-black text-black flex items-center gap-2 cursor-pointer shadow-sm">
+          <svg class="w-4 h-4 text-black" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"></path>
+          </svg>
+          <span id="fullscreen-text">Fullscreen</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECTION 4: CODE PASTE MODAL (For inserting custom HTML/JS) -->
+  <div id="code-paste-modal" class="fixed inset-0 z-50 bg-black/30 backdrop-blur-xl opacity-0 pointer-events-none transition-all duration-300 flex items-center justify-center p-4">
+    <div class="relative w-full max-w-2xl bg-white/80 backdrop-blur-2xl border border-white/80 rounded-[32px] p-6 shadow-2xl flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-black text-black">Paste Custom HTML or Code</h3>
+        <button onclick="closeCustomCodeEditor()" class="w-8 h-8 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center font-black text-black text-sm">
+          ✕
+        </button>
+      </div>
+
+      <input id="custom-game-name" type="text" placeholder="Game or File Name..." class="w-full px-4 py-2.5 rounded-xl border border-white/80 bg-white/70 text-black font-semibold text-sm outline-none mb-3">
+
+      <textarea id="custom-game-code" rows="10" placeholder="Paste full HTML, JavaScript, or Canvas code here..." class="w-full p-4 rounded-2xl border border-white/80 bg-white/70 text-black font-mono text-xs outline-none resize-none mb-4"></textarea>
+
+      <div class="flex justify-end gap-2">
+        <button onclick="closeCustomCodeEditor()" class="px-5 py-2 rounded-full text-xs font-bold text-black bg-black/10 hover:bg-black/20">
+          Cancel
+        </button>
+        <button onclick="saveCustomCode()" class="ios-glass-pill px-6 py-2 rounded-full text-xs font-black text-black">
+          Add to Games
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Snow Particle Engine -->
+  <script>
+    (function initSnowEngine() {
+      const canvas = document.getElementById('snow-canvas');
+      const ctx = canvas.getContext('2d');
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      let flakes = [];
+
+      function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        createFlakes();
+      }
+
+      function createFlakes() {
+        const count = Math.floor((width * height) / 9000);
+        flakes = [];
+        for (let i = 0; i < count; i++) {
+          flakes.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            radius: Math.random() * 2.5 + 1.0,
+            speedY: Math.random() * 1.1 + 0.5,
+            speedX: Math.random() * 0.6 - 0.3,
+            alpha: Math.random() * 0.6 + 0.3,
+            sway: Math.random() * 0.03,
+            swayAngle: Math.random() * Math.PI * 2
+          });
+        }
+      }
+
+      window.addEventListener('resize', resize);
+      resize();
+
+      function render() {
+        ctx.clearRect(0, 0, width, height);
+
+        for (let i = 0; i < flakes.length; i++) {
+          const f = flakes[i];
+          f.swayAngle += f.sway;
+          f.x += Math.sin(f.swayAngle) * 0.4 + f.speedX;
+          f.y += f.speedY;
+
+          if (f.y > height + 5) {
+            f.y = -5;
+            f.x = Math.random() * width;
+          }
+          if (f.x > width + 5) f.x = -5;
+          else if (f.x < -5) f.x = width + 5;
+
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${f.alpha})`;
+          ctx.shadowColor = 'rgba(255, 255, 255, 0.7)';
+          ctx.shadowBlur = f.radius * 2;
+          ctx.fill();
+        }
+
+        requestAnimationFrame(render);
+      }
+
+      window.onload = function() {
+        render();
+      };
+    })();
+  </script>
+
+  <!-- Navigation & Dynamic Games State -->
+  <script>
+    const heroView = document.getElementById('hero-view');
+    const gamesView = document.getElementById('games-view');
+    const playBtn = document.getElementById('play-trigger-btn');
+    const gamesGrid = document.getElementById('games-grid');
+
+    // Transitions
+    function transitionToGames() {
+      heroView.style.opacity = '0';
+      heroView.style.transform = 'scale(0.92) translateY(-20px)';
+
+      setTimeout(() => {
+        heroView.classList.add('hidden');
+        gamesView.classList.remove('hidden');
+        void gamesView.offsetWidth;
+
+        gamesView.style.opacity = '1';
+        gamesView.style.transform = 'translateY(0)';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 400);
+    }
+
+    playBtn.addEventListener('click', transitionToGames);
+
+    // Minecraft Xbox One Edition Code String
+    const minecraftXboxHtml = `<!doctype html> <html lang="en"> <head><base href="/r/da01d3b649f9b9c40681/"><script src="letter-gate.js"><\/script><script src="release.js"><\/script><script src="launch.js"><\/script> <meta charset="utf-8"> <meta name="viewport" content="width=device-width,initial-scale=1"> <title>MCTM</title> <style>:root{color-scheme:dark;font-family:ui-monospace,monospace}*{box-sizing:border-box}body,html{width:100%;height:100%;margin:0;background:#111}body{display:grid;grid-template-rows:1fr auto;overflow:hidden}#stage{position:relative;overflow:hidden;min-height:0;background:#000}canvas{position:absolute;display:block;outline:none}#status{padding:.5rem .75rem;background:#191919;color:#ddd}#status[data-error]{color:#ff8e8e;white-space:pre-wrap}progress{width:min(32rem, 80vw);margin-left:.75rem}</style> <style id="phone-host">html[data-phone],html[data-phone] body{background:#000;overflow:visible}html[data-phone] body{position:fixed;top:0;left:0;width:100%;height:100dvh}@media (display-mode: standalone),(display-mode: fullscreen){html[data-phone]{min-height:100lvh}html[data-phone] body{height:100lvh}}#turn-phone{display:none}@media (orientation: portrait){html[data-phone] #turn-phone{display:grid;position:fixed;inset:0;z-index:2147483647;place-items:center;background:#000;color:#e0e0e0;pointer-events:auto;touch-action:none;font:16px Mojangles,monospace;text-shadow:2px 2px 0 #383838;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}html[data-phone] body > :not(#turn-phone){visibility:hidden}}</style> <link rel="icon" href="launcher/assets/icon-mctm-32.png" type="image/png"></head> <body> <div id="stage"><canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault();"></canvas></div> <div id="status">Downloading…<progress id="progress" value="0" max="100" hidden></progress></div> <script>const launchFlags=typeof WEBCRAFT_LAUNCH_FLAGS==="string"?WEBCRAFT_LAUNCH_FLAGS:location.search.replace(/^\\?/,"");const statusElement=document.getElementById("status");const progressElement=document.getElementById("progress");const canvasElement=document.getElementById("canvas");const stageElement=document.getElementById("stage");const phoneHost=new URLSearchParams(launchFlags).get("controls")==="touch";if(phoneHost){document.documentElement.setAttribute("data-phone","");const A=document.getElementById("turn-phone")||document.createElement("div");A.id="turn-phone";A.textContent="Turn your phone sideways";for(const g of["pointerdown","touchstart","mousedown","contextmenu"])A.addEventListener(g,(A=>{A.preventDefault();A.stopPropagation()}));document.body.appendChild(A);let g=[];const u=()=>{for(const A of g)clearTimeout(A);const A=()=>{if(scrollX||scrollY)scrollTo(0,0);if(typeof presentCanvas==="function")presentCanvas()};A();g=[100,500].map((g=>setTimeout(A,g)))};for(const[A,g]of[[window,"resize"],[window,"orientationchange"],[window.visualViewport,"resize"],[window.visualViewport,"scroll"],[screen.orientation,"change"]])A?.addEventListener(g,u)}<\/script> <script src="assets.js"><\/script><script src="boot.js"><\/script><script src="Minecraft.Client.js"><\/script> </body> </html>`;
+
+    // Games List with Minecraft as the Premier Card
+    let gamesList = [
+      {
+        id: 'minecraft-xbox-one',
+        title: 'Minecraft Xbox One Edition',
+        subtitle: 'Console Edition • WebCraft Client',
+        iconImage: 'https://cdn.freebiesupply.com/logos/large/2x/minecraft-1-logo-svg-vector.svg',
+        html: minecraftXboxHtml
+      }
+    ];
+
+    function renderGamesGrid() {
+      gamesGrid.innerHTML = '';
+      gamesList.forEach(game => {
+        const card = document.createElement('div');
+        card.className = 'game-card ios-glass rounded-3xl p-5 flex items-center justify-between cursor-pointer';
+        
+        const iconHtml = game.iconImage
+          ? `<img src="${game.iconImage}" alt="${game.title}" class="w-8 h-8 object-contain" onerror="this.src='https://placehold.co/48x48/ffffff/000000?text=MC'">`
+          : `<span class="text-2xl">${game.icon || '🎮'}</span>`;
+
+        card.innerHTML = `
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-white/80 border border-white flex items-center justify-center p-2.5 shadow-sm shrink-0">
+              ${iconHtml}
+            </div>
+            <div>
+              <h3 class="text-base sm:text-lg font-black text-black leading-snug">${game.title}</h3>
+              <p class="text-xs font-semibold text-black/60">${game.subtitle || 'Click to run'}</p>
+            </div>
+          </div>
+          <span class="text-xl font-black text-black ml-2">→</span>
+        `;
+        card.addEventListener('click', () => openGame(game.id));
+        gamesGrid.appendChild(card);
+      });
+    }
+
+    renderGamesGrid();
+
+    // HTML File Upload Loader
+    const htmlFileInput = document.getElementById('html-file-input');
+    htmlFileInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      files.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const content = event.target.result;
+          const fileName = file.name.replace(/\.[^/.]+$/, "");
+          gamesList.push({
+            id: 'custom-' + Date.now() + '-' + index,
+            title: fileName,
+            subtitle: 'User Uploaded File',
+            icon: '📄',
+            html: content
+          });
+          renderGamesGrid();
+        };
+        reader.readAsText(file);
+      });
+      htmlFileInput.value = '';
+    });
+
+    // Custom Code Editor Modal
+    const codeModal = document.getElementById('code-paste-modal');
+    const customNameInput = document.getElementById('custom-game-name');
+    const customCodeInput = document.getElementById('custom-game-code');
+
+    function openCustomCodeEditor() {
+      codeModal.classList.remove('opacity-0', 'pointer-events-none');
+      codeModal.classList.add('opacity-100', 'pointer-events-auto');
+    }
+
+    function closeCustomCodeEditor() {
+      codeModal.classList.remove('opacity-100', 'pointer-events-auto');
+      codeModal.classList.add('opacity-0', 'pointer-events-none');
+      customNameInput.value = '';
+      customCodeInput.value = '';
+    }
+
+    function saveCustomCode() {
+      const title = customNameInput.value.trim() || 'Custom HTML Game';
+      const code = customCodeInput.value.trim();
+      if (!code) return;
+
+      gamesList.push({
+        id: 'code-' + Date.now(),
+        title: title,
+        subtitle: 'Custom Script File',
+        icon: '💻',
+        html: code
+      });
+
+      renderGamesGrid();
+      closeCustomCodeEditor();
+    }
+  </script>
+
+  <!-- Modal & Fullscreen Controller -->
+  <script>
+    const modalBackdrop = document.getElementById('game-modal-backdrop');
+    const modalWindow = document.getElementById('game-modal-window');
+    const modalTitle = document.getElementById('modal-game-title');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const modalFullscreenBtn = document.getElementById('modal-fullscreen-btn');
+    const fullscreenText = document.getElementById('fullscreen-text');
+    const gameIframe = document.getElementById('game-iframe');
+
+    let currentGameId = null;
+
+    function openGame(gameId) {
+      const data = gamesList.find(g => g.id === gameId);
+      if (!data) return;
+
+      currentGameId = gameId;
+      modalTitle.innerText = data.title;
+      gameIframe.srcdoc = data.html;
+
+      modalBackdrop.classList.remove('opacity-0', 'pointer-events-none');
+      modalBackdrop.classList.add('opacity-100', 'pointer-events-auto');
+      modalWindow.classList.remove('scale-95');
+      modalWindow.classList.add('scale-100');
+    }
+
+    function closeGame() {
+      modalBackdrop.classList.remove('opacity-100', 'pointer-events-auto');
+      modalBackdrop.classList.add('opacity-0', 'pointer-events-none');
+      modalWindow.classList.remove('scale-100');
+      modalWindow.classList.add('scale-95');
+
+      setTimeout(() => {
+        gameIframe.srcdoc = '';
+        currentGameId = null;
+      }, 300);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        if (modalWindow.requestFullscreen) {
+          modalWindow.requestFullscreen();
+        }
+        fullscreenText.innerText = 'Exit Fullscreen';
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+        fullscreenText.innerText = 'Fullscreen';
+      }
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        fullscreenText.innerText = 'Fullscreen';
+      } else {
+        fullscreenText.innerText = 'Exit Fullscreen';
+      }
+    });
+
+    modalCloseBtn.addEventListener('click', closeGame);
+    modalFullscreenBtn.addEventListener('click', toggleFullscreen);
+
+    modalBackdrop.addEventListener('click', (e) => {
+      if (e.target === modalBackdrop) closeGame();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && currentGameId) closeGame();
+    });
+  </script>
+</body>
+</html>
